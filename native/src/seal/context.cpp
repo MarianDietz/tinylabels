@@ -261,14 +261,14 @@ namespace seal
             }
 
             // Check that all coeff moduli are relatively prime to plain_modulus
-            for (size_t i = 0; i < coeff_modulus_size; i++)
-            {
-                if (!are_coprime(coeff_modulus[i].value(), plain_modulus.value()))
-                {
-                    context_data.qualifiers_.parameter_error = error_type::invalid_plain_modulus_coprimality;
-                    return context_data;
-                }
-            }
+            // for (size_t i = 0; i < coeff_modulus_size; i++)
+            // {
+            //     if (!are_coprime(coeff_modulus[i].value(), plain_modulus.value()))
+            //     {
+            //         context_data.qualifiers_.parameter_error = error_type::invalid_plain_modulus_coprimality;
+            //         return context_data;
+            //     }
+            // }
 
             // Check that plain_modulus is smaller than total coeff modulus
             if (!is_less_than_uint(

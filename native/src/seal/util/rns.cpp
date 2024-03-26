@@ -591,7 +591,7 @@ namespace seal
                 throw invalid_argument("poly_modulus_degree is invalid");
             }
 
-            t_ = t;
+            //t_ = t;
             coeff_count_ = poly_modulus_degree;
 
             // Allocate memory for the bases q, B, Bsk, Bsk U m_tilde, t_gamma

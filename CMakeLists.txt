@@ -683,6 +683,18 @@ if(SEAL_BUILD_EXAMPLES)
 endif()
 
 ##################
+# My tests       #
+##################
+
+set(SEAL_BUILD_MYTESTS_OPTION_STR "Build my own tests")
+option(SEAL_BUILD_MYTESTS ${SEAL_BUILD_EXAMPLES_OPTION_STR} OFF)
+message(STATUS "SEAL_BUILD_MYTESTS: ${SEAL_BUILD_MYTESTS}")
+
+if(SEAL_BUILD_MYTESTS)
+    add_subdirectory(native/mytests)
+endif()
+
+##################
 # SEAL C++ tests #
 ##################
 
