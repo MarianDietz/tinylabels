@@ -5,7 +5,7 @@ using namespace seal;
 using namespace seal::util;
 
 size_t w = 10;
-size_t m = 5;
+size_t m = 1;
 
 constexpr double noise_standard_deviation = 3.2;
 constexpr double noise_max_deviation = 128 * noise_standard_deviation;
@@ -79,8 +79,14 @@ void vector_constant_product(PolyIter a, size_t len_a, MultiplyUIntModOperand co
     });
 }
 
-void inner_product() {
-    // ...
+void inner_product(PolyIter a, PolyIter b, size_t len, RNSIter destination, vector<Modulus> &coeff_modulus) {
+    auto temp(allocate_poly(destination.poly_modulus_degree(), coeff_modulus.size(), MemoryPoolHandle::Global()));
+    RNSIter tempIter(temp.get(), destination.poly_modulus_degree());
+    SEAL_ITERATE(iter(a, b), len, [&](auto I) {
+        dyadic_product_coeffmod(get<0>(I), get<1>(I), coeff_modulus.size(), coeff_modulus, tempIter);
+        add_poly_coeffmod(tempIter, destination, coeff_modulus.size(), coeff_modulus, destination);
+    });
+    // TODO may have to deallocate temp unless SEAL does this automatically
 }
 
 int main()
@@ -122,14 +128,25 @@ int main()
     auto prng = UniformRandomGeneratorFactory::DefaultFactory()->create();
     MemoryPoolHandle pool = MemoryManager::GetPool(mm_prof_opt::mm_force_new, true);
 
-    auto noise(allocate_poly(poly_modulus_degree, coeff_modulus.size(), pool));
-    sample_poly_normal(prng, parms, noise.get());
-    for (int i = 0; i < coeff_modulus.size(); ++i) {
-        ntt_negacyclic_harvey(noise.get() + i * poly_modulus_degree, ntt_tables[i]);
-    }
+    // auto noise(allocate_poly(poly_modulus_degree, coeff_modulus.size(), pool));
+    // sample_poly_normal(prng, parms, noise.get());
+    // for (int i = 0; i < coeff_modulus.size(); ++i) {
+    //     ntt_negacyclic_harvey(noise.get() + i * poly_modulus_degree, ntt_tables[i]);
+    // }
 
     // RNSIter noiseIter(noise.get(), poly_modulus_degree);
     // modulo_poly_coeffs(noiseIter, coeff_modulus.size(), iter(coeff_modulus), noiseIter);
+
+    auto m1(allocate_zero_poly_array(w, poly_modulus_degree, coeff_modulus.size(), pool));
+    PolyIter m1Iter(m1.get(), poly_modulus_degree, coeff_modulus.size());
+    auto m2(allocate_zero_poly_array(w, poly_modulus_degree, coeff_modulus.size(), pool));
+    PolyIter m2Iter(m2.get(), poly_modulus_degree, coeff_modulus.size());
+    auto y(allocate_zero_poly(poly_modulus_degree, coeff_modulus.size(), pool));
+    RNSIter yIter(y.get(), poly_modulus_degree);
+
+    m1[3] = 2;
+    m2[5] = 1;
+    y[0] = 3;
 
     auto a(allocate_poly_array(w, poly_modulus_degree, coeff_modulus.size(), pool));
     PolyIter aIter(a.get(), poly_modulus_degree, coeff_modulus.size());
@@ -146,12 +163,36 @@ int main()
     });
     // as for a, we just interprete s as polynomials in NTT form
 
-    auto res(allocate_poly_array(w*m, poly_modulus_degree, coeff_modulus.size(), pool));
-    PolyIter resIter(res.get(), poly_modulus_degree, coeff_modulus.size());
-    outer_product(aIter, w, sIter, m, resIter, coeff_modulus);
+    auto ct1(allocate_poly_array(w*m, poly_modulus_degree, coeff_modulus.size(), pool));
+    PolyIter ct1Iter(ct1.get(), poly_modulus_degree, coeff_modulus.size());
+    outer_product(aIter, w, sIter, m, ct1Iter, coeff_modulus);
+    add_poly_coeffmod(ct1Iter, m1Iter, w, coeff_modulus, ct1Iter);
 
-    // cout << poly_to_hex_string(a.get(), poly_modulus_degree, 1) << "\n";//, pool);
-    // cout << poly_to_hex_string(a.get() + poly_modulus_degree, poly_modulus_degree, 1) << "\n";//, pool);
+    auto ct2(allocate_poly_array(w, poly_modulus_degree, coeff_modulus.size(), pool));
+    PolyIter ct2Iter(ct2.get(), poly_modulus_degree, coeff_modulus.size());
+    outer_product(aIter, w, sIter+m, 1, ct2Iter, coeff_modulus);
+    add_poly_coeffmod(ct2Iter, m2Iter, w, coeff_modulus, ct2Iter);
+
+    auto ctres(allocate_poly_array(w, poly_modulus_degree, coeff_modulus.size(), pool));
+    PolyIter ctresIter(ctres.get(), poly_modulus_degree, coeff_modulus.size());
+    outer_product(ct1Iter, w, PolyIter(y.get(), poly_modulus_degree, coeff_modulus.size()), 1, ctresIter, coeff_modulus);
+    add_poly_coeffmod(ctresIter, ct2Iter, w, coeff_modulus, ctresIter);
+
+    auto sk(allocate_poly(poly_modulus_degree, coeff_modulus.size(), pool));
+    RNSIter skIter(sk.get(), poly_modulus_degree);
+    inner_product(sIter, PolyIter(y.get(), poly_modulus_degree, coeff_modulus.size()), 1, skIter, coeff_modulus);
+    add_poly_coeffmod(skIter, *(sIter+m), coeff_modulus.size(), coeff_modulus, skIter);
+
+    auto aSk(allocate_poly_array(w, poly_modulus_degree, coeff_modulus.size(), pool));
+    PolyIter aSkIter(aSk.get(), poly_modulus_degree, coeff_modulus.size());
+    outer_product(aIter, w, PolyIter(sk.get(), poly_modulus_degree, coeff_modulus.size()), 1, aSkIter, coeff_modulus);
+
+    auto mres(allocate_poly_array(w, poly_modulus_degree, coeff_modulus.size(), pool));
+    PolyIter mresIter(mres.get(), poly_modulus_degree, coeff_modulus.size());
+    sub_poly_coeffmod(ctresIter, aSkIter, w, coeff_modulus, mresIter);
+
+    cout << poly_to_hex_string(mres.get(), poly_modulus_degree, 1) << "\n";//, pool);
+    cout << poly_to_hex_string(mres.get() + poly_modulus_degree, poly_modulus_degree, 1) << "\n";//, pool);
 
     return 0;
 }
