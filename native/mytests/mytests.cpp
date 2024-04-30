@@ -534,10 +534,11 @@ public:
     BatchSelect(const SEALContext::ContextData &context_data, shared_ptr<UniformRandomGenerator> prng) : context_data_(context_data), prng(prng), lhe(context_data, prng), lenc(context_data, prng) {}
 
     void setup() {
+        auto begin = chrono::steady_clock::now();
         cerr << "Setup...\n";
         lhe.setup();
         lenc.setup();
-        cerr << "Setup done.\n";
+        cerr << "Setup done in " << (chrono::steady_clock::now() - begin).count() << ".\n";
     }
 
     void enc1(Pointer<uint64_t> &l1) { // l1 should have size w * poly_modulus_degree
@@ -555,13 +556,15 @@ public:
             multiply_poly_scalar_coeffmod(temp_iter[i][0], poly_modulus_degree, coeff_modulus[1].value(), coeff_modulus[0], temp_iter[i][0]);
         }
 
+        auto begin = chrono::steady_clock::now();
         cerr << "Lenc encryption...\n";
         Pointer<uint64_t> &r = lenc.enc(temp);
-        cerr << "Lenc encryption done.\n";
+        cerr << "Lenc encryption done in " << (chrono::steady_clock::now() - begin).count() << ".\n";
 
+        begin = chrono::steady_clock::now();
         cerr << "LHE encryption 1...\n";
         lhe.enc1(r);
-        cerr << "LHE encryption 1 done.\n";
+        cerr << "LHE encryption 1 done in " << (chrono::steady_clock::now() - begin).count() << ".\n";
     }
 
     void enc2(Pointer<uint64_t> &l2) {
@@ -581,9 +584,10 @@ public:
 
         add_poly_error(w, prng, context_data_, temp.get(), noise_large_standard_deviation, noise_large_max_deviation);
 
+        auto begin = chrono::steady_clock::now();
         cerr << "LHE encryption 2...\n";
         lhe.enc2(temp);
-        cerr << "LHE encryption 2 done.\n";
+        cerr << "LHE encryption 2 done in " << (chrono::steady_clock::now() - begin).count() << ".\n";
     }
 
     void keygen(vector<bool> &y) {
@@ -608,13 +612,15 @@ public:
             ntt_negacyclic_harvey(temp_iter[i], coeff_modulus_size, context_data_.small_ntt_tables());
         }
 
+        auto begin = chrono::steady_clock::now();
         cerr << "Computing Lenc digest (server)...\n";
         Pointer<uint64_t> &digest = lenc.digest(temp);
-        cerr << "Computing Lenc digest (server) done.\n";
+        cerr << "Computing Lenc digest (server) done in " << (chrono::steady_clock::now() - begin).count() << ".\n";
 
+        begin = chrono::steady_clock::now();
         cerr << "LHE keygen...\n";
         lhe.keygen(digest);
-        cerr << "LHE keygen done.\n";
+        cerr << "LHE keygen done in " << (chrono::steady_clock::now() - begin).count() << ".\n";
     }
 
     void dec(vector<bool> &y, Pointer<uint64_t> &out) {
@@ -639,17 +645,20 @@ public:
             ntt_negacyclic_harvey(temp_iter[i], coeff_modulus_size, context_data_.small_ntt_tables());
         }
 
+        auto begin = chrono::steady_clock::now();
         cerr << "Computing Lenc digest (client)...\n";
         Pointer<uint64_t> &digest = lenc.digest(temp);
-        cerr << "Computing Lenc digest (client) done.\n";
+        cerr << "Computing Lenc digest (client) done in " << (chrono::steady_clock::now() - begin).count() << ".\n";
 
+        begin = chrono::steady_clock::now();
         cerr << "LHE decryption...\n";
         Pointer<uint64_t> &res = lhe.dec(digest);
-        cerr << "LHE decryption done.\n";
+        cerr << "LHE decryption done in " << (chrono::steady_clock::now() - begin).count() << ".\n";
 
+        begin = chrono::steady_clock::now();
         cerr << "Lenc evaluation...\n";
         Pointer<uint64_t> &delta = lenc.eval(temp);
-        cerr << "Lenc evaluation done.\n";
+        cerr << "Lenc evaluation done in " << (chrono::steady_clock::now() - begin).count() << ".\n";
 
         PolyIter res_iter(res.get(), poly_modulus_degree, coeff_modulus.size());
         PolyIter delta_iter(delta.get(), poly_modulus_degree, coeff_modulus.size());
@@ -761,10 +770,14 @@ int main()
     bs.keygen(y);
     bs.dec(y, out);
 
+    cerr << "Batch-select done.\n";
+
     for (size_t i = 0; i < w*poly_modulus_degree; ++i) {
         uint64_t expected = (l1[i]*y[i] + l2[i]) % coeff_modulus[0].value();
         if (expected != out[i]) cout << "incorrect: " << i << "\n";
     }
+
+    cerr << "Diffcheck done.\n";
 
     /* Pointer<uint64_t> s(allocate_zero_poly_array(w, poly_modulus_degree, coeff_modulus.size(), pool));
     PolyIter sIter(s.get(), poly_modulus_degree, coeff_modulus.size());
