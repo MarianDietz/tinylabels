@@ -34,7 +34,10 @@ namespace seal
         ckks = 0x2,
 
         // Brakerski-Gentry-Vaikuntanathan scheme
-        bgv = 0x3
+        bgv = 0x3,
+
+        // Online-offline garbling scheme
+        onoff = 0x4
     };
 
     /**
@@ -223,7 +226,7 @@ namespace seal
         inline void set_plain_modulus(const Modulus &plain_modulus)
         {
             // Check that scheme is BFV
-            if (scheme_ != scheme_type::bfv && scheme_ != scheme_type::bgv && !plain_modulus.is_zero())
+            if (scheme_ != scheme_type::bfv && scheme_ != scheme_type::bgv && scheme_ != scheme_type::onoff && !plain_modulus.is_zero())
             {
                 throw std::logic_error("plain_modulus is not supported for this scheme");
             }

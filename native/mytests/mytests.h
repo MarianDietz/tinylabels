@@ -78,6 +78,9 @@ inline void print_parameters(const seal::SEALContext &context)
     case seal::scheme_type::bgv:
         scheme_name = "BGV";
         break;
+    case seal::scheme_type::onoff:
+        scheme_name = "On/off";
+        break;
     default:
         throw std::invalid_argument("unsupported scheme");
     }

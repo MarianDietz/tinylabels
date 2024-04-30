@@ -250,7 +250,7 @@ namespace seal
             return context_data;
         }
 
-        if (parms.scheme() == scheme_type::bfv || parms.scheme() == scheme_type::bgv)
+        if (parms.scheme() == scheme_type::bfv || parms.scheme() == scheme_type::bgv || parms.scheme() == scheme_type::onoff)
         {
             // Plain modulus must be at least 2 and at most 60 bits
             if (plain_modulus.value() >> SEAL_PLAIN_MOD_BIT_COUNT_MAX ||
