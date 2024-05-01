@@ -16,17 +16,62 @@ if(NOT DEFINED SEAL_BUILD_MYTESTS)
 endif()
 
 if(SEAL_BUILD_MYTESTS)
-    add_executable(mytests)
-
-    target_sources(mytests
+    add_executable(setup)
+    target_sources(setup
         PRIVATE
-            ${CMAKE_CURRENT_LIST_DIR}/mytests.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/setup.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/batchselect.cpp
+    )
+
+    add_executable(enc1)
+    target_sources(enc1
+        PRIVATE
+            ${CMAKE_CURRENT_LIST_DIR}/enc1.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/batchselect.cpp
+    )
+
+    add_executable(enc2)
+    target_sources(enc2
+        PRIVATE
+            ${CMAKE_CURRENT_LIST_DIR}/enc2.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/batchselect.cpp
+    )
+
+    add_executable(keygen)
+    target_sources(keygen
+        PRIVATE
+            ${CMAKE_CURRENT_LIST_DIR}/keygen.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/batchselect.cpp
+    )
+
+    add_executable(dec)
+    target_sources(dec
+        PRIVATE
+            ${CMAKE_CURRENT_LIST_DIR}/dec.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/batchselect.cpp
+    )
+
+    add_executable(gen_samples)
+    target_sources(gen_samples
+        PRIVATE
+            ${CMAKE_CURRENT_LIST_DIR}/gen_samples.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/batchselect.cpp
     )
 
     if(TARGET SEAL::seal)
-        target_link_libraries(mytests PRIVATE SEAL::seal)
+        target_link_libraries(setup PRIVATE SEAL::seal)
+        target_link_libraries(enc1 PRIVATE SEAL::seal)
+        target_link_libraries(enc2 PRIVATE SEAL::seal)
+        target_link_libraries(keygen PRIVATE SEAL::seal)
+        target_link_libraries(dec PRIVATE SEAL::seal)
+        target_link_libraries(gen_samples PRIVATE SEAL::seal)
     elseif(TARGET SEAL::seal_shared)
-        target_link_libraries(mytests PRIVATE SEAL::seal_shared)
+        target_link_libraries(setup PRIVATE SEAL::seal_shared)
+        target_link_libraries(enc1 PRIVATE SEAL::seal_shared)
+        target_link_libraries(enc2 PRIVATE SEAL::seal_shared)
+        target_link_libraries(keygen PRIVATE SEAL::seal_shared)
+        target_link_libraries(dec PRIVATE SEAL::seal_shared)
+        target_link_libraries(gen_samples PRIVATE SEAL::seal_shared)
     else()
         message(FATAL_ERROR "Cannot find target SEAL::seal or SEAL::seal_shared")
     endif()
