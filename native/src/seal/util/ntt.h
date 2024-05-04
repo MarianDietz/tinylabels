@@ -15,6 +15,8 @@
 
 extern size_t counter_ntt_forward;
 extern size_t counter_ntt_inverse;
+extern std::chrono::nanoseconds time_ntt_forward;
+extern std::chrono::nanoseconds time_ntt_inverse;
 
 namespace seal
 {

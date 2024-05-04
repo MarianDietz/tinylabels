@@ -19,6 +19,11 @@ namespace seal
 {
     namespace util
     {
+        extern size_t counter_poly_compose;
+        extern size_t counter_poly_decompose;
+        extern std::chrono::nanoseconds time_poly_compose;
+        extern std::chrono::nanoseconds time_poly_decompose;
+        
         class RNSBase
         {
         public:

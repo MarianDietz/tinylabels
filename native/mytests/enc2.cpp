@@ -41,13 +41,14 @@ int main()
     bs.save_ct2(f_ct2);
     fclose(f_ct2);
 
-    cout << "# Add's = " << counter_poly_add << "\n";
-    cout << "# Sub's = " << counter_poly_sub << "\n";
-    cout << "# Mult's = " << counter_poly_mult << "\n";
-    cout << "# Scalar mult's = " << counter_poly_mult_scalar << "\n";
-    cout << "# Neg's = " << counter_poly_negate << "\n";
-    cout << "# Forward NTT's = " << counter_ntt_forward << "\n";
-    cout << "# Inverse NTT's = " << counter_ntt_inverse << "\n";
+    cout << "# Add's = " << counter_poly_add << " (" << time_poly_add.count() << " ns)\n";
+    cout << "# Sub's = " << counter_poly_sub << " (" << time_poly_sub.count() << " ns)\n";
+    cout << "# Mult's = " << counter_poly_mult << " (" << time_poly_mult.count() << " ns)\n";
+    cout << "# Scalar mult's = " << counter_poly_mult_scalar << " (" << time_poly_mult_scalar.count() << " ns)\n";
+    cout << "# Forward NTT's = " << counter_ntt_forward << " (" << time_ntt_forward.count() << " ns)\n";
+    cout << "# Inverse NTT's = " << counter_ntt_inverse << " (" << time_ntt_inverse.count() << " ns)\n";
+    cout << "# Compose = " << counter_poly_compose << " (" << time_poly_compose.count() << " ns)\n";
+    cout << "# Decompose = " << counter_poly_decompose << " (" << time_poly_decompose.count() << " ns)\n";
 
     return 0;
 }

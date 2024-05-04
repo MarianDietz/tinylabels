@@ -19,7 +19,10 @@ namespace seal
         size_t counter_poly_sub = 0;
         size_t counter_poly_mult = 0;
         size_t counter_poly_mult_scalar = 0;
-        size_t counter_poly_negate = 0;
+        chrono::nanoseconds time_poly_add = chrono::nanoseconds::zero();
+        chrono::nanoseconds time_poly_sub = chrono::nanoseconds::zero();
+        chrono::nanoseconds time_poly_mult = chrono::nanoseconds::zero();
+        chrono::nanoseconds time_poly_mult_scalar = chrono::nanoseconds::zero();
 
         void modulo_poly_coeffs(ConstCoeffIter poly, std::size_t coeff_count, const Modulus &modulus, CoeffIter result)
         {
@@ -51,6 +54,7 @@ namespace seal
             CoeffIter result)
         {
             counter_poly_add++;
+            auto begin = chrono::steady_clock::now();
 #ifdef SEAL_DEBUG
             if (!operand1 && coeff_count > 0)
             {
@@ -89,6 +93,7 @@ namespace seal
                 get<2>(I) = SEAL_COND_SELECT(sum >= modulus_value, sum - modulus_value, sum);
             });
 #endif
+            time_poly_add += chrono::steady_clock::now() - begin;
         }
 
         void sub_poly_coeffmod(
@@ -96,6 +101,7 @@ namespace seal
             CoeffIter result)
         {
             counter_poly_sub++;
+            auto begin = chrono::steady_clock::now();
 #ifdef SEAL_DEBUG
             if (!operand1 && coeff_count > 0)
             {
@@ -135,6 +141,7 @@ namespace seal
                 get<2>(I) = temp_result + (modulus_value & static_cast<std::uint64_t>(-borrow));
             });
 #endif
+            time_poly_sub += chrono::steady_clock::now() - begin;
         }
 
         void add_poly_scalar_coeffmod(
@@ -206,6 +213,7 @@ namespace seal
             CoeffIter result)
         {
             counter_poly_mult_scalar++;
+            auto begin = chrono::steady_clock::now();
 #ifdef SEAL_DEBUG
             if (!poly && coeff_count > 0)
             {
@@ -229,6 +237,7 @@ namespace seal
                 get<1>(I) = multiply_uint_mod(x, scalar, modulus);
             });
 #endif
+            time_poly_mult_scalar += chrono::steady_clock::now() - begin;
         }
 
         void dyadic_product_coeffmod(
@@ -236,6 +245,7 @@ namespace seal
             CoeffIter result)
         {
             counter_poly_mult++;
+            auto begin = chrono::steady_clock::now();
 #ifdef SEAL_DEBUG
             if (!operand1)
             {
@@ -290,6 +300,7 @@ namespace seal
                 get<2>(I) = SEAL_COND_SELECT(tmp3 >= modulus_value, tmp3 - modulus_value, tmp3);
             });
 #endif
+            time_poly_mult += chrono::steady_clock::now() - begin;
         }
 
         uint64_t poly_infty_norm_coeffmod(ConstCoeffIter operand, size_t coeff_count, const Modulus &modulus)

@@ -15,6 +15,11 @@ namespace seal
 {
     namespace util
     {
+        size_t counter_poly_compose = 0;
+        size_t counter_poly_decompose = 0;
+        std::chrono::nanoseconds time_poly_compose = chrono::nanoseconds::zero();
+        std::chrono::nanoseconds time_poly_decompose = chrono::nanoseconds::zero();
+
         RNSBase::RNSBase(const vector<Modulus> &rnsbase, MemoryPoolHandle pool)
             : pool_(move(pool)), size_(rnsbase.size())
         {
@@ -281,6 +286,8 @@ namespace seal
 
         void RNSBase::decompose_array(uint64_t *value, size_t count, MemoryPoolHandle pool) const
         {
+            counter_poly_decompose++;
+            auto begin = chrono::steady_clock::now();
             if (!value)
             {
                 throw invalid_argument("value cannot be null");
@@ -316,6 +323,7 @@ namespace seal
                     });
                 });
             }
+            time_poly_decompose += chrono::steady_clock::now() - begin;
         }
 
         void RNSBase::compose(uint64_t *value, MemoryPoolHandle pool) const
@@ -353,6 +361,8 @@ namespace seal
 
         void RNSBase::compose_array(uint64_t *value, size_t count, MemoryPoolHandle pool) const
         {
+            counter_poly_compose++;
+            auto begin = chrono::steady_clock::now();
             if (!value)
             {
                 throw invalid_argument("value cannot be null");
@@ -397,6 +407,7 @@ namespace seal
                         });
                 });
             }
+            time_poly_compose += chrono::steady_clock::now() - begin;
         }
 
         void BaseConverter::fast_convert(ConstCoeffIter in, CoeffIter out, MemoryPoolHandle pool) const

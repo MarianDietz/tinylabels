@@ -18,6 +18,8 @@ using namespace std;
 
 size_t counter_ntt_forward = 0;
 size_t counter_ntt_inverse = 0;
+std::chrono::nanoseconds time_ntt_forward = chrono::nanoseconds::zero();
+std::chrono::nanoseconds time_ntt_inverse = chrono::nanoseconds::zero();
 
 #ifdef SEAL_USE_INTEL_HEXL
 namespace intel
@@ -410,6 +412,7 @@ namespace seal
         void ntt_negacyclic_harvey(CoeffIter operand, const NTTTables &tables)
         {
             counter_ntt_forward++;
+            auto begin = chrono::steady_clock::now();
 #ifdef SEAL_USE_INTEL_HEXL
             size_t N = size_t(1) << tables.coeff_count_power();
             uint64_t p = tables.modulus().value();
@@ -437,6 +440,7 @@ namespace seal
                 }
             });
 #endif
+            time_ntt_forward += chrono::steady_clock::now() - begin;
         }
 
         void inverse_ntt_negacyclic_harvey_lazy(CoeffIter operand, const NTTTables &tables)
@@ -456,6 +460,7 @@ namespace seal
         void inverse_ntt_negacyclic_harvey(CoeffIter operand, const NTTTables &tables)
         {
             counter_ntt_inverse++;
+            auto begin = chrono::steady_clock::now();
 #ifdef SEAL_USE_INTEL_HEXL
             size_t N = size_t(1) << tables.coeff_count_power();
             uint64_t p = tables.modulus().value();
@@ -476,6 +481,7 @@ namespace seal
                 }
             });
 #endif
+            time_ntt_inverse += chrono::steady_clock::now() - begin;
         }
     } // namespace util
 } // namespace seal
