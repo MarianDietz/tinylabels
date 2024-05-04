@@ -15,6 +15,12 @@ namespace seal
 {
     namespace util
     {
+        size_t counter_poly_add = 0;
+        size_t counter_poly_sub = 0;
+        size_t counter_poly_mult = 0;
+        size_t counter_poly_mult_scalar = 0;
+        size_t counter_poly_negate = 0;
+
         void modulo_poly_coeffs(ConstCoeffIter poly, std::size_t coeff_count, const Modulus &modulus, CoeffIter result)
         {
 #ifdef SEAL_DEBUG
@@ -44,6 +50,7 @@ namespace seal
             ConstCoeffIter operand1, ConstCoeffIter operand2, std::size_t coeff_count, const Modulus &modulus,
             CoeffIter result)
         {
+            counter_poly_add++;
 #ifdef SEAL_DEBUG
             if (!operand1 && coeff_count > 0)
             {
@@ -67,7 +74,6 @@ namespace seal
 #ifdef SEAL_USE_INTEL_HEXL
             intel::hexl::EltwiseAddMod(&result[0], &operand1[0], &operand2[0], coeff_count, modulus_value);
 #else
-
             SEAL_ITERATE(iter(operand1, operand2, result), coeff_count, [&](auto I) {
 #ifdef SEAL_DEBUG
                 if (get<0>(I) >= modulus_value)
@@ -89,6 +95,7 @@ namespace seal
             ConstCoeffIter operand1, ConstCoeffIter operand2, std::size_t coeff_count, const Modulus &modulus,
             CoeffIter result)
         {
+            counter_poly_sub++;
 #ifdef SEAL_DEBUG
             if (!operand1 && coeff_count > 0)
             {
@@ -198,6 +205,7 @@ namespace seal
             ConstCoeffIter poly, size_t coeff_count, MultiplyUIntModOperand scalar, const Modulus &modulus,
             CoeffIter result)
         {
+            counter_poly_mult_scalar++;
 #ifdef SEAL_DEBUG
             if (!poly && coeff_count > 0)
             {
@@ -227,6 +235,7 @@ namespace seal
             ConstCoeffIter operand1, ConstCoeffIter operand2, size_t coeff_count, const Modulus &modulus,
             CoeffIter result)
         {
+            counter_poly_mult++;
 #ifdef SEAL_DEBUG
             if (!operand1)
             {

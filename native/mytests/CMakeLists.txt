@@ -58,6 +58,14 @@ if(SEAL_BUILD_MYTESTS)
             ${CMAKE_CURRENT_LIST_DIR}/batchselect.cpp
     )
 
+    add_executable(benchmark)
+    target_sources(benchmark
+        PRIVATE
+            ${CMAKE_CURRENT_LIST_DIR}/benchmark.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/batchselect.cpp
+    )
+
+
     if(TARGET SEAL::seal)
         target_link_libraries(setup PRIVATE SEAL::seal)
         target_link_libraries(enc1 PRIVATE SEAL::seal)
@@ -65,6 +73,7 @@ if(SEAL_BUILD_MYTESTS)
         target_link_libraries(keygen PRIVATE SEAL::seal)
         target_link_libraries(dec PRIVATE SEAL::seal)
         target_link_libraries(gen_samples PRIVATE SEAL::seal)
+        target_link_libraries(benchmark PRIVATE SEAL::seal)
     elseif(TARGET SEAL::seal_shared)
         target_link_libraries(setup PRIVATE SEAL::seal_shared)
         target_link_libraries(enc1 PRIVATE SEAL::seal_shared)
@@ -72,6 +81,7 @@ if(SEAL_BUILD_MYTESTS)
         target_link_libraries(keygen PRIVATE SEAL::seal_shared)
         target_link_libraries(dec PRIVATE SEAL::seal_shared)
         target_link_libraries(gen_samples PRIVATE SEAL::seal_shared)
+        target_link_libraries(benchmark PRIVATE SEAL::seal_shared)
     else()
         message(FATAL_ERROR "Cannot find target SEAL::seal or SEAL::seal_shared")
     endif()

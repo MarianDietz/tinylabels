@@ -8,9 +8,9 @@ int main()
 {
     EncryptionParameters parms(scheme_type::onoff);
     parms.set_poly_modulus_degree(poly_modulus_degree);
-    parms.set_plain_modulus(PlainModulus::Batching(poly_modulus_degree, 43));
+    parms.set_plain_modulus(PlainModulus::Batching(poly_modulus_degree, mod_plaintext));
 
-    vector<Modulus> coeff_modulus = CoeffModulus::Create(poly_modulus_degree, {44});
+    vector<Modulus> coeff_modulus = CoeffModulus::Create(poly_modulus_degree, {mod_noise});
     coeff_modulus.insert(coeff_modulus.begin(), parms.plain_modulus());
     parms.set_coeff_modulus(coeff_modulus);
 

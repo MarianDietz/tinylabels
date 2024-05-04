@@ -16,6 +16,9 @@
 
 using namespace std;
 
+size_t counter_ntt_forward = 0;
+size_t counter_ntt_inverse = 0;
+
 #ifdef SEAL_USE_INTEL_HEXL
 namespace intel
 {
@@ -406,6 +409,7 @@ namespace seal
 
         void ntt_negacyclic_harvey(CoeffIter operand, const NTTTables &tables)
         {
+            counter_ntt_forward++;
 #ifdef SEAL_USE_INTEL_HEXL
             size_t N = size_t(1) << tables.coeff_count_power();
             uint64_t p = tables.modulus().value();
@@ -451,6 +455,7 @@ namespace seal
 
         void inverse_ntt_negacyclic_harvey(CoeffIter operand, const NTTTables &tables)
         {
+            counter_ntt_inverse++;
 #ifdef SEAL_USE_INTEL_HEXL
             size_t N = size_t(1) << tables.coeff_count_power();
             uint64_t p = tables.modulus().value();

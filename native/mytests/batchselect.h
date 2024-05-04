@@ -25,11 +25,14 @@ using namespace std;
 using namespace seal;
 using namespace seal::util;
 
+const size_t mod_plaintext = 50;
+const size_t mod_noise = 59;
+
 const size_t poly_modulus_degree = 4096;
 const size_t w = 512;  // needs to be a power of 2
 const size_t l = 9;    // = log_2 w
 const size_t m = 4;    // s.t. g^m > modulus
-const size_t g = 1 << 14;
+const uint64_t g = (uint64_t)1 << 28;
 
 const size_t poly_size = 2*poly_modulus_degree;
 
@@ -38,6 +41,18 @@ constexpr double noise_small_max_deviation = 128 * noise_small_standard_deviatio
 
 constexpr double noise_large_standard_deviation = 1000;
 constexpr double noise_large_max_deviation = 128 * noise_large_standard_deviation;
+
+void sample_poly_normal(
+    shared_ptr<UniformRandomGenerator> prng, const EncryptionParameters &parms, uint64_t *destination,
+    double noise_standard_deviation, double noise_max_deviation);
+
+void add_poly_error(
+    size_t count,
+    shared_ptr<UniformRandomGenerator> prng, const SEALContext::ContextData &context_data, uint64_t *destination,
+    double noise_standard_deviation, double noise_max_deviation);
+
+void sample_poly_uniform(
+    shared_ptr<UniformRandomGenerator> prng, const EncryptionParameters &parms, uint64_t *destination);
 
 struct LHE {
 public:

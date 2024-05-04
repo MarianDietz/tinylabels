@@ -13,6 +13,9 @@
 #include "seal/util/uintcore.h"
 #include <stdexcept>
 
+extern size_t counter_ntt_forward;
+extern size_t counter_ntt_inverse;
+
 namespace seal
 {
     namespace util

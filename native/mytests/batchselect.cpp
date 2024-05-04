@@ -536,10 +536,9 @@ void BatchSelect::keygen(Pointer<uint64_t> &y) {
                 temp_iter[i][0][j] = 1;
             }
         }
-        inverse_ntt_negacyclic_harvey(temp_iter[i][0], *context_data_.plain_ntt_tables());
         set_uint(temp_iter[i][0], poly_modulus_degree, temp_iter[i][1]);
-        modulo_poly_coeffs(temp_iter[i][1], poly_modulus_degree, coeff_modulus[1], temp_iter[i][1]);
-        ntt_negacyclic_harvey(temp_iter[i], coeff_modulus_size, context_data_.small_ntt_tables());
+        inverse_ntt_negacyclic_harvey(temp_iter[i][1], *context_data_.plain_ntt_tables());
+        ntt_negacyclic_harvey(temp_iter[i][1], context_data_.small_ntt_tables()[1]);
     }
 
     auto begin = chrono::steady_clock::now();
@@ -569,10 +568,9 @@ void BatchSelect::dec(Pointer<uint64_t> &y, Pointer<uint64_t> &out) {
                 temp_iter[i][0][j] = 1;
             }
         }
-        inverse_ntt_negacyclic_harvey(temp_iter[i][0], *context_data_.plain_ntt_tables());
         set_uint(temp_iter[i][0], poly_modulus_degree, temp_iter[i][1]);
-        modulo_poly_coeffs(temp_iter[i][1], poly_modulus_degree, coeff_modulus[1], temp_iter[i][1]);
-        ntt_negacyclic_harvey(temp_iter[i], coeff_modulus_size, context_data_.small_ntt_tables());
+        inverse_ntt_negacyclic_harvey(temp_iter[i][1], *context_data_.plain_ntt_tables());
+        ntt_negacyclic_harvey(temp_iter[i][1], context_data_.small_ntt_tables()[1]);
     }
 
     auto begin = chrono::steady_clock::now();

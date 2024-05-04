@@ -18,6 +18,13 @@ namespace seal
 {
     namespace util
     {
+
+        extern size_t counter_poly_add;
+        extern size_t counter_poly_sub;
+        extern size_t counter_poly_mult;
+        extern size_t counter_poly_mult_scalar;
+        extern size_t counter_poly_negate;
+
         void modulo_poly_coeffs(ConstCoeffIter poly, std::size_t coeff_count, const Modulus &modulus, CoeffIter result);
 
         inline void modulo_poly_coeffs(
@@ -77,6 +84,7 @@ namespace seal
         inline void negate_poly_coeffmod(
             ConstCoeffIter poly, std::size_t coeff_count, const Modulus &modulus, CoeffIter result)
         {
+            counter_poly_negate++;
 #ifdef SEAL_DEBUG
             if (!poly && coeff_count > 0)
             {
