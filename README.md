@@ -19,14 +19,14 @@ See the evaluation section of the paper for more details on the precise paramete
 Building the source code follows the same procedure as the SEAL framework (see README-SEAL.md).
 In particular, it is sufficient to run the following two commands to build the implementation in-place:
 ```
-cmake -S . -B build -DSEAL_BUILD_TESTS=ON
+cmake -S . -B build -DSEAL_BUILD_TINYLABELS=ON
 cmake --build build
 ```
 
 This will generate all executables (`setup`, `enc1`, `enc2`, `keygen`, `dec`, `gen_samples`, `benchmark`) of our implementation in the `build/bin` directory.
 To test our implementation, run `cd build/bin`, and then follow the next steps.
 
-If your processor supports [Intel HEXL](https://github.com/intel/hexl), you may enable the acceleration library `-DSEAL_USE_INTEL_HEXL=ON` when running the first `cmake` commands. Doing so may yield some performance improvements.
+If your processor supports [Intel HEXL](https://github.com/intel/hexl), you may enable the acceleration library using `-DSEAL_USE_INTEL_HEXL=ON` when running the first `cmake` commands. Doing so may yield some performance improvements.
 
 ## How to Use
 
