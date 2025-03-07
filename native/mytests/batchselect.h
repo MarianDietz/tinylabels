@@ -20,6 +20,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <format>
 
 using namespace std;
 using namespace seal;
@@ -53,6 +54,9 @@ void add_poly_error(
 
 void sample_poly_uniform(
     shared_ptr<UniformRandomGenerator> prng, const EncryptionParameters &parms, uint64_t *destination);
+
+string time_str(chrono::nanoseconds time);
+void print_statistics();
 
 struct LHE {
 public:

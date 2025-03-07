@@ -14,54 +14,27 @@ int main()
     coeff_modulus.insert(coeff_modulus.begin(), parms.plain_modulus());
     parms.set_coeff_modulus(coeff_modulus);
 
-    cout << "moduli: " << coeff_modulus[0].value() << " " << coeff_modulus[1].value() << "\n";
-
     SEALContext context(parms);
     auto &context_data = *context.get_context_data(parms.parms_id());
 
+    cout << "Plaintext modulus: " << coeff_modulus[0].value() << "\n";
+    cout << "===================\n";
+
     auto prng = UniformRandomGeneratorFactory::DefaultFactory()->create();
+
+    auto begin = chrono::steady_clock::now();
 
     BatchSelect bs(context_data, prng);
     bs.setup();
 
+    cout << "===================\n";
+    cout << "Total time: " << time_str(chrono::steady_clock::now() - begin) << ".\n";
+
+    print_statistics();
+
     FILE *f_pp = fopen("pp.bin", "wb");
     bs.save_pp(f_pp);
     fclose(f_pp);
-
-    cout << "# Add's = " << counter_poly_add << " (" << time_poly_add.count() << " ns)\n";
-    cout << "# Sub's = " << counter_poly_sub << " (" << time_poly_sub.count() << " ns)\n";
-    cout << "# Mult's = " << counter_poly_mult << " (" << time_poly_mult.count() << " ns)\n";
-    cout << "# Scalar mult's = " << counter_poly_mult_scalar << " (" << time_poly_mult_scalar.count() << " ns)\n";
-    cout << "# Forward NTT's = " << counter_ntt_forward << " (" << time_ntt_forward.count() << " ns)\n";
-    cout << "# Inverse NTT's = " << counter_ntt_inverse << " (" << time_ntt_inverse.count() << " ns)\n";
-    cout << "# Compose = " << counter_poly_compose << " (" << time_poly_compose.count() << " ns)\n";
-    cout << "# Decompose = " << counter_poly_decompose << " (" << time_poly_decompose.count() << " ns)\n";
-
-    // Pointer<uint64_t> l1(allocate_zero_uint(w*poly_modulus_degree, MemoryManager::GetPool()));
-    // Pointer<uint64_t> l2(allocate_zero_uint(w*poly_modulus_degree, MemoryManager::GetPool()));
-    // Pointer<uint64_t> out(allocate_zero_uint(w*poly_modulus_degree, MemoryManager::GetPool()));
-    // vector<bool> y(w*poly_modulus_degree, false);
-
-    // for (size_t i = 0; i < w*poly_modulus_degree; ++i) {
-    //     l1[i] = rand()%coeff_modulus[0].value();
-    //     l2[i] = rand()%coeff_modulus[0].value();
-    //     y[i] = rand()%2;
-    // }
-
-    // cout << coeff_modulus[0].value() << " " << coeff_modulus[1].value() << "\n";
-    // bs.enc1(l1);
-    // bs.enc2(l2);
-    // bs.keygen(y);
-    // bs.dec(y, out);
-
-    // cerr << "Batch-select done.\n";
-
-    // for (size_t i = 0; i < w*poly_modulus_degree; ++i) {
-    //     uint64_t expected = (l1[i]*y[i] + l2[i]) % coeff_modulus[0].value();
-    //     if (expected != out[i]) cout << "incorrect: " << i << "\n";
-    // }
-
-    // cerr << "Diffcheck done.\n";
 
     return 0;
 }

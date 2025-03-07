@@ -17,38 +17,56 @@ int main()
     SEALContext context(parms);
     auto &context_data = *context.get_context_data(parms.parms_id());
 
-    auto prng = UniformRandomGeneratorFactory::DefaultFactory()->create();
+    cout << "Plaintext modulus: " << coeff_modulus[0].value() << "\n";
+    cout << "===================\n";
+    cout << "Generating l1, l2, y, and expected (l1*y+l2)...\n";
 
     Pointer<uint64_t> l1(allocate_zero_uint(w*poly_modulus_degree, MemoryManager::GetPool()));
     Pointer<uint64_t> l2(allocate_zero_uint(w*poly_modulus_degree, MemoryManager::GetPool()));
     Pointer<uint64_t> out(allocate_zero_uint(w*poly_modulus_degree, MemoryManager::GetPool()));
     Pointer<uint64_t> y(allocate_zero_uint(w*poly_modulus_degree, MemoryManager::GetPool()));
 
+    std::random_device rd;
+    std::mt19937_64 e2(rd());
+    std::uniform_int_distribution<uint64_t> dist(0, coeff_modulus[0].value()-1);
+    std::uniform_int_distribution<uint64_t> bin(0, 1);
+
     for (size_t i = 0; i < w*poly_modulus_degree; ++i) {
-        l1[i] = rand()%coeff_modulus[0].value();
-        l2[i] = rand()%coeff_modulus[0].value();
-        y[i] = rand()%2;
+        l1[i] = dist(e2);
+        l2[i] = dist(e2);
+        y[i] = bin(e2);
         out[i] = (l1[i]*y[i] + l2[i]) % coeff_modulus[0].value();
     }
 
-    cout << coeff_modulus[0].value() << "\n";
-    for (size_t i = 0; i < 5; ++i) cout << l1[i] << "*" << y[i] << " + " << l2[i] << " = " << out[i] << "\n";
+    cout << "Done.\n";
 
-    FILE *f_l1 = fopen("l1.bin", "wb");
-    fwrite(l1.get(), 8, w*poly_modulus_degree, f_l1);
-    fclose(f_l1);
+    ofstream f_l1;
+    f_l1.open("l1.txt");
+    for (size_t i = 0; i < w*poly_modulus_degree; ++i) {
+        f_l1 << l1[i] << "\n";
+    }
+    f_l1.close();
 
-    FILE *f_l2 = fopen("l2.bin", "wb");
-    fwrite(l2.get(), 8, w*poly_modulus_degree, f_l2);
-    fclose(f_l2);
+    ofstream f_l2;
+    f_l2.open("l2.txt");
+    for (size_t i = 0; i < w*poly_modulus_degree; ++i) {
+        f_l2 << l2[i] << "\n";
+    }
+    f_l2.close();
 
-    FILE *f_y = fopen("y.bin", "wb");
-    fwrite(y.get(), 8, w*poly_modulus_degree, f_y);
-    fclose(f_y);
+    ofstream f_y;
+    f_y.open("y.txt");
+    for (size_t i = 0; i < w*poly_modulus_degree; ++i) {
+        f_y << y[i] << "\n";
+    }
+    f_y.close();
 
-    FILE *f_expected = fopen("expected.bin", "wb");
-    fwrite(out.get(), 8, w*poly_modulus_degree, f_expected);
-    fclose(f_expected);
+    ofstream f_expected;
+    f_expected.open("expected.txt");
+    for (size_t i = 0; i < w*poly_modulus_degree; ++i) {
+        f_expected << out[i] << "\n";
+    }
+    f_expected.close();
 
     return 0;
 }

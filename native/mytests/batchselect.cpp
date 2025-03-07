@@ -131,24 +131,35 @@ void decompose_g(RNSIter y, PolyIter destination, const SEALContext::ContextData
     inverse_ntt_negacyclic_harvey(y_composed_iter, coeff_modulus_size, ntt_tables); // inverse NTT
     context_data.rns_tool()->base_q()->compose_array(y_composed.get(), poly_modulus_degree, MemoryManager::GetPool()); // combine the two mod values into a single integers
 
-    //cout << *y_composed.get() << " " << *(y_composed.get() + 1) << "\n";
-
     SEAL_ITERATE(destination, m, [&](const RNSIter &I) {
         // take mod g, and divide by g:
-        //int counter = 0;
         SEAL_ITERATE(iter(StrideIter<uint64_t*>(y_composed, coeff_modulus_size), StrideIter<uint64_t*>((*I).ptr(), coeff_modulus_size)), poly_modulus_degree, [&](const tuple<uint64_t*,uint64_t*> &J) {
-            //if (counter++ == 0) cout << *get<0>(J) << " " << *(get<0>(J)+1) << "\n";
             SEAL_DIVIDE_UINT128_UINT64(get<0>(J), g, get<1>(J));
             swap(*(get<0>(J)), *(get<1>(J)));
             swap(*(get<0>(J)+1), *(get<1>(J)+1));
         });
         context_data.rns_tool()->base_q()->decompose_array((*I).ptr(), poly_modulus_degree, MemoryManager::GetPool()); // back into mod form
         ntt_negacyclic_harvey(I, coeff_modulus_size, ntt_tables); // forward NTT
-        //cout << counter++ << ":\n";
-        //cout << poly_to_hex_string(I, poly_modulus_degree, 1) << "\n";//, pool);
-        //cout << poly_to_hex_string(I + poly_modulus_degree, poly_modulus_degree, 1) << "\n";//, pool);
-        //cout << poly_to_hex_string(y_decomposed.get() + (2*m+1)*poly_modulus_degree, poly_modulus_degree, 1) << "\n";//, pool);
     });
+}
+
+string time_str(chrono::nanoseconds time) {
+    std::stringstream stream;
+    stream << std::fixed << std::setprecision(3) << (double)time.count()/1000000000 << " s";
+    return stream.str();
+}
+
+void print_statistics() {
+    cout << "===================\n";
+    cout << "Number of operations (and total time spent on them) for each type of operations on ring elements\n";
+    cout << "# Add's = " << counter_poly_add << " (" << time_str(time_poly_add) << ")\n";
+    cout << "# Sub's = " << counter_poly_sub << " (" << time_str(time_poly_sub) << ")\n";
+    cout << "# Mult's = " << counter_poly_mult << " (" << time_str(time_poly_mult) << ")\n";
+    cout << "# Scalar mult's = " << counter_poly_mult_scalar << " (" << time_str(time_poly_mult_scalar) << ")\n";
+    cout << "# Forward NTT's = " << counter_ntt_forward << " (" << time_str(time_ntt_forward) << ")\n";
+    cout << "# Inverse NTT's = " << counter_ntt_inverse << " (" << time_str(time_ntt_inverse) << ")\n";
+    cout << "# Compose = " << counter_poly_compose << " (" << time_str(time_poly_compose) << ")\n";
+    cout << "# Decompose = " << counter_poly_decompose << " (" << time_str(time_poly_decompose) << ")\n";
 }
 
 
@@ -188,28 +199,21 @@ void LHE::enc1(Pointer<uint64_t> &m1) {
     PolyIter m1_iter(m1.get(), poly_modulus_degree, coeff_modulus_size);
     PolyIter temp_iter(temp.get(), poly_modulus_degree, coeff_modulus_size);
 
-    //cout << "step 1" << endl;
-
     SEAL_ITERATE(s1_iter, m, [&](const RNSIter &I) {
         sample_poly_uniform(prng, parms, I);
     });
     // as for a, we just interprete s as polynomials in NTT form
 
-    //cout << "step 2" << endl;
-
     outer_product(a_iter, w, s1_iter, m, ct1_iter, coeff_modulus);
 
-    //cout << "step 3" << endl;
-
     for (size_t i = 0; i < w; ++i) {
-        //cout << "step 5" << endl;
         multiply_g(m1_iter[i], temp_iter, context_data_);
         add_poly_coeffmod(ct1_iter + (i*m), temp_iter, m, coeff_modulus, ct1_iter + (i*m));
-        //cout << "step 6" << endl;
     }
-    //cout << "step 7" << endl;
 
+    auto begin = chrono::steady_clock::now();
     add_poly_error(w*m, prng, context_data_, data_ct1_.get(), noise_small_standard_deviation, noise_small_max_deviation);
+    cerr << "Time used for generating noise: " << time_str(chrono::steady_clock::now() - begin) << "\n";
 }
 
 /**
@@ -234,7 +238,9 @@ void LHE::enc2(Pointer<uint64_t> &m2) {
     vector_constant_product(a_iter, w, s2_iter, ct2_iter, coeff_modulus);
     add_poly_coeffmod(ct2_iter, m2_iter, w, coeff_modulus, ct2_iter);
 
+    auto begin = chrono::steady_clock::now();
     add_poly_error(w, prng, context_data_, data_ct2_.get(), noise_large_standard_deviation, noise_large_max_deviation);
+    cerr << "Time used for generating noise: " << time_str(chrono::steady_clock::now() - begin) << "\n";
 }
 
 /**
@@ -257,11 +263,6 @@ void LHE::keygen(Pointer<uint64_t> &y) {
     RNSIter temp_iter(temp.get(), poly_modulus_degree);
 
     decompose_g(y_iter, y_decomposed_iter, context_data_);
-    /* for (int i = 0; i < m; ++i) {
-        cout << i << ":\n";
-        cout << poly_to_hex_string(y_decomposed.get() + (2*m)*poly_modulus_degree, poly_modulus_degree, 1) << "\n";//, pool);
-        cout << poly_to_hex_string(y_decomposed.get() + (2*m+1)*poly_modulus_degree, poly_modulus_degree, 1) << "\n";//, pool);
-    } */
 
     // sk <- s2
     set_poly(data_s2_.get(), poly_modulus_degree, coeff_modulus_size, data_sk_.get());
@@ -352,9 +353,6 @@ Pointer<uint64_t>& Lenc::enc(Pointer<uint64_t> &s) {
         PolyIter cti_iter = ct_iter + i*2*m*w;
         outer_product(r_iter + i*w, w, b_iter, 2*m, cti_iter, coeff_modulus);
     }
-    cerr << "Lenc encryption first step done\n";
-    chrono::nanoseconds g = chrono::steady_clock::now() - chrono::steady_clock::now();
-    chrono::nanoseconds add = chrono::steady_clock::now() - chrono::steady_clock::now();
     for (size_t i = 0; i < l; ++i) {
         PolyIter cti_iter = ct_iter + i*2*m*w;
         for (size_t j = 0; j < w; ++j) {
@@ -363,22 +361,14 @@ Pointer<uint64_t>& Lenc::enc(Pointer<uint64_t> &s) {
 
             RNSIter ri_iter = i == l-1 ? s_iter[j] : r_iter[(i+1)*w + j];
 
-            auto begin = chrono::steady_clock::now();
             multiply_g(ri_iter, temp_iter, context_data_);
-            g += chrono::steady_clock::now() - begin;
-
-            auto begin2 = chrono::steady_clock::now();
             add_poly_coeffmod(ctij_iter, temp_iter, m, coeff_modulus, ctij_iter);
-            add += chrono::steady_clock::now() - begin2;
         }
     }
 
-    cerr << "time for g: " << g.count() << "\n";
-    cerr << "time for add: " << add.count() << "\n";
-
     auto begin = chrono::steady_clock::now();
     add_poly_error(l*w*2*m, prng, context_data_, data_ct_.get(), noise_small_standard_deviation, noise_small_max_deviation);
-    cerr << "time for error: " << (chrono::steady_clock::now() - begin).count() << "\n";
+    cerr << "Time used for generating noise: " << time_str(chrono::steady_clock::now() - begin) << "\n";
 
     return data_r_;
 }
@@ -406,22 +396,10 @@ Pointer<uint64_t>& Lenc::digest(Pointer<uint64_t> &a) {
     }
     
     for (size_t i = w-1; i-- > 0;) {
-        //cout << "going to multiply with ";
-        //for (int k = 0; k < 2*m; ++k) if (poly_to_hex_string(tree_iter + (2*i+1)*m + k, poly_modulus_degree, 1) != "0") cout << "1 "; else cout << "0 ";
-        //cout << "\n";
         inner_product(b_iter, tree_iter + (2*i+1)*m, 2*m, temp_iter, coeff_modulus);
         negate_poly_coeffmod(temp_iter, coeff_modulus_size, coeff_modulus, temp_iter);
         if (i) { // we do not need the decomposition of the root
             decompose_g(temp_iter, tree_iter + i*m, context_data_);
-            //cout << poly_to_hex_string(temp_iter, poly_modulus_degree, 1) << "\n";//, pool);
-            /* cout << i << ": ";
-            for (size_t j = 0; j < 2*w-1; ++j) {
-                bool one = false;
-                for (int k = 0; k < m; ++k) if (poly_to_hex_string(tree_iter + j*m + k, poly_modulus_degree, 1) != "0") one = true;
-                if (one) cout << "1 ";
-                else cout << "0 ";
-            }
-            cout << "\n"; */
         } else { // instead, we will store the digest separately
             set_poly(temp.get(), poly_modulus_degree, coeff_modulus_size, data_digest_.get());
         }
@@ -468,7 +446,7 @@ void BatchSelect::setup() {
     cerr << "Setup...\n";
     lhe.setup();
     lenc.setup();
-    cerr << "Setup done in " << (chrono::steady_clock::now() - begin).count() << ".\n";
+    cerr << "Setup done in " << time_str(chrono::steady_clock::now() - begin) << ".\n";
 }
 
 void BatchSelect::enc1(Pointer<uint64_t> &l1) { // l1 should have size w * poly_modulus_degree
@@ -489,12 +467,12 @@ void BatchSelect::enc1(Pointer<uint64_t> &l1) { // l1 should have size w * poly_
     auto begin = chrono::steady_clock::now();
     cerr << "Lenc encryption...\n";
     Pointer<uint64_t> &r = lenc.enc(temp);
-    cerr << "Lenc encryption done in " << (chrono::steady_clock::now() - begin).count() << ".\n";
+    cerr << "Lenc encryption done in " << time_str(chrono::steady_clock::now() - begin) << ".\n";
 
     begin = chrono::steady_clock::now();
     cerr << "LHE encryption 1...\n";
     lhe.enc1(r);
-    cerr << "LHE encryption 1 done in " << (chrono::steady_clock::now() - begin).count() << ".\n";
+    cerr << "LHE encryption 1 done in " << time_str(chrono::steady_clock::now() - begin) << ".\n";
 }
 
 void BatchSelect::enc2(Pointer<uint64_t> &l2) {
@@ -517,7 +495,7 @@ void BatchSelect::enc2(Pointer<uint64_t> &l2) {
     auto begin = chrono::steady_clock::now();
     cerr << "LHE encryption 2...\n";
     lhe.enc2(temp);
-    cerr << "LHE encryption 2 done in " << (chrono::steady_clock::now() - begin).count() << ".\n";
+    cerr << "LHE encryption 2 done in " << time_str(chrono::steady_clock::now() - begin) << ".\n";
 }
 
 void BatchSelect::keygen(Pointer<uint64_t> &y) {
@@ -542,14 +520,14 @@ void BatchSelect::keygen(Pointer<uint64_t> &y) {
     }
 
     auto begin = chrono::steady_clock::now();
-    cerr << "Computing Lenc digest (server)...\n";
+    cerr << "Computing Lenc digest...\n";
     Pointer<uint64_t> &digest = lenc.digest(temp);
-    cerr << "Computing Lenc digest (server) done in " << (chrono::steady_clock::now() - begin).count() << ".\n";
+    cerr << "Computing Lenc digest done in " << time_str(chrono::steady_clock::now() - begin) << ".\n";
 
     begin = chrono::steady_clock::now();
     cerr << "LHE keygen...\n";
     lhe.keygen(digest);
-    cerr << "LHE keygen done in " << (chrono::steady_clock::now() - begin).count() << ".\n";
+    cerr << "LHE keygen done in " << time_str(chrono::steady_clock::now() - begin) << ".\n";
 }
 
 void BatchSelect::dec(Pointer<uint64_t> &y, Pointer<uint64_t> &out) {
@@ -574,50 +552,39 @@ void BatchSelect::dec(Pointer<uint64_t> &y, Pointer<uint64_t> &out) {
     }
 
     auto begin = chrono::steady_clock::now();
-    cerr << "Computing Lenc digest (client)...\n";
+    cerr << "Computing Lenc digest...\n";
     Pointer<uint64_t> &digest = lenc.digest(temp);
-    cerr << "Computing Lenc digest (client) done in " << (chrono::steady_clock::now() - begin).count() << ".\n";
+    cerr << "Computing Lenc digest done in " << time_str(chrono::steady_clock::now() - begin) << ".\n";
 
     begin = chrono::steady_clock::now();
     cerr << "LHE decryption...\n";
     Pointer<uint64_t> &res = lhe.dec(digest);
-    cerr << "LHE decryption done in " << (chrono::steady_clock::now() - begin).count() << ".\n";
+    cerr << "LHE decryption done in " << time_str(chrono::steady_clock::now() - begin) << ".\n";
 
     begin = chrono::steady_clock::now();
     cerr << "Lenc evaluation...\n";
     Pointer<uint64_t> &delta = lenc.eval(temp);
-    cerr << "Lenc evaluation done in " << (chrono::steady_clock::now() - begin).count() << ".\n";
+    cerr << "Lenc evaluation done in " << time_str(chrono::steady_clock::now() - begin) << ".\n";
 
     PolyIter res_iter(res.get(), poly_modulus_degree, coeff_modulus.size());
     PolyIter delta_iter(delta.get(), poly_modulus_degree, coeff_modulus.size());
     sub_poly_coeffmod(res_iter, delta_iter, w, coeff_modulus, res_iter);
 
-    //cout << res_iter[0][0][0] << " " << res_iter[0][1][0] << "\n";
-    //add_poly_error(1, prng, context_data_, res.get(), noise_small_standard_deviation, noise_small_max_deviation);
-    //cout << res_iter[0][0][0] << " " << res_iter[0][1][0] << "\n";
-
-    //cout << context_data_.rns_tool()->t().value() << " " << context_data_.rns_tool()->q_last_mod_t() << " " << context_data_.rns_tool()->m_sk().value() << " " << context_data_.rns_tool()->m_tilde().value() << " " << context_data_.rns_tool()->inv_q_last_mod_t() << " " << context_data_.rns_tool()->gamma().value() << "\n";
-    //cout << context_data_.rns_tool()->base_q()->inv_punctured_prod_mod_base_array()->operand << " " << context_data_.rns_tool()->base_q()->inv_punctured_prod_mod_base_array()->quotient << "\n";
     MultiplyUIntModOperand inv = *context_data_.rns_tool()->base_q()->inv_punctured_prod_mod_base_array();
     for (size_t i = 0; i < w; ++i) {
         // Step 1: subtract the error from res_iter[i][0] (it is given in res_iter[i][1], but as a different modulus)
         inverse_ntt_negacyclic_harvey(res_iter[i][1], context_data_.small_ntt_tables()[1]);
-        //if (i==0) cout << res_iter[0][0][0] << " " << res_iter[0][1][0] << "\n";
         // Step 1b: Now we need to convert to a different modulus (this is relevant whenever some coefficient is negative!)
         uint64_t modulus_value = coeff_modulus[1].value();
         uint64_t modulus_value_plaintext = coeff_modulus[0].value();
         SEAL_ITERATE(res_iter[i][1], poly_modulus_degree, [&](uint64_t &val) {
-            //if (i==0) cout << "check " << val << " " << modulus_value/2 << "\n";
             if (val > modulus_value/2) val = modulus_value_plaintext - (modulus_value - val);
         });
-        //if (i==0) cout << res_iter[0][0][0] << " " << res_iter[0][1][0] << "\n";
         ntt_negacyclic_harvey(res_iter[i][1], context_data_.small_ntt_tables()[0]);
-        //if (i==0) cout << res_iter[0][0][0] << " " << res_iter[0][1][0] << "\n";
         sub_poly_coeffmod(res_iter[i][0], res_iter[i][1], poly_modulus_degree, coeff_modulus[0], res_iter[i][0]);
         // Step 2: remove the factor of Delta from res_iter[i][0] by multiplying with its inverse
         multiply_poly_scalar_coeffmod(res_iter[i][0], poly_modulus_degree, inv, coeff_modulus[0], res_iter[i][0]);
         // Step 3: copy output
         set_uint(res_iter[i], poly_modulus_degree, out.get() + i*poly_modulus_degree);
     }
-    //cout << res_iter[0][0][0] << " " << res_iter[0][1][0] << "\n";
 }

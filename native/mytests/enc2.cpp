@@ -19,6 +19,9 @@ int main()
 
     auto prng = UniformRandomGeneratorFactory::DefaultFactory()->create();
 
+    cout << "Plaintext modulus: " << coeff_modulus[0].value() << "\n";
+    cout << "===================\n";
+
     BatchSelect bs(context_data, prng);
 
     FILE *f_pp = fopen("pp.bin", "rb");
@@ -26,12 +29,20 @@ int main()
     fclose(f_pp);
 
     Pointer<uint64_t> l2(allocate_zero_uint(w*poly_modulus_degree, MemoryManager::GetPool()));
+    ifstream f_l2;
+    f_l2.open("l2.txt");
+    for (size_t i = 0; i < w*poly_modulus_degree; ++i) {
+        f_l2 >> l2[i];
+    }
+    f_l2.close();
 
-    FILE *f_l2 = fopen("l2.bin", "rb");
-    fread(l2.get(), 8, w*poly_modulus_degree, f_l2);
-    fclose(f_l2);
+    auto begin = chrono::steady_clock::now();
 
     bs.enc2(l2);
+
+    cout << "===================\n";
+    cout << "Total time: " << time_str(chrono::steady_clock::now() - begin) << ".\n";
+    print_statistics();
 
     FILE *f_st2 = fopen("st2.bin", "wb");
     bs.save_st2(f_st2);
@@ -40,15 +51,6 @@ int main()
     FILE *f_ct2 = fopen("ct2.bin", "wb");
     bs.save_ct2(f_ct2);
     fclose(f_ct2);
-
-    cout << "# Add's = " << counter_poly_add << " (" << time_poly_add.count() << " ns)\n";
-    cout << "# Sub's = " << counter_poly_sub << " (" << time_poly_sub.count() << " ns)\n";
-    cout << "# Mult's = " << counter_poly_mult << " (" << time_poly_mult.count() << " ns)\n";
-    cout << "# Scalar mult's = " << counter_poly_mult_scalar << " (" << time_poly_mult_scalar.count() << " ns)\n";
-    cout << "# Forward NTT's = " << counter_ntt_forward << " (" << time_ntt_forward.count() << " ns)\n";
-    cout << "# Inverse NTT's = " << counter_ntt_inverse << " (" << time_ntt_inverse.count() << " ns)\n";
-    cout << "# Compose = " << counter_poly_compose << " (" << time_poly_compose.count() << " ns)\n";
-    cout << "# Decompose = " << counter_poly_decompose << " (" << time_poly_decompose.count() << " ns)\n";
 
     return 0;
 }
