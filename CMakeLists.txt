@@ -686,12 +686,12 @@ endif()
 # My tests       #
 ##################
 
-set(SEAL_BUILD_MYTESTS_OPTION_STR "Build my own tests")
-option(SEAL_BUILD_MYTESTS ${SEAL_BUILD_EXAMPLES_OPTION_STR} OFF)
-message(STATUS "SEAL_BUILD_MYTESTS: ${SEAL_BUILD_MYTESTS}")
+set(SEAL_BUILD_TINYLABELS_OPTION_STR "Build TinyLabels")
+option(SEAL_BUILD_TINYLABELS ${SEAL_BUILD_EXAMPLES_OPTION_STR} OFF)
+message(STATUS "SEAL_BUILD_TINYLABELS: ${SEAL_BUILD_TINYLABELS}")
 
-if(SEAL_BUILD_MYTESTS)
-    add_subdirectory(native/mytests)
+if(SEAL_BUILD_TINYLABELS)
+    add_subdirectory(native/tinylabels)
 endif()
 
 ##################

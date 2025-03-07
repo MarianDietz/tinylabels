@@ -1,13 +1,10 @@
-# Copyright (c) Microsoft Corporation. All rights reserved.
-# Licensed under the MIT license.
-
 cmake_minimum_required(VERSION 3.13)
 
-project(SEALMyTests VERSION 4.1.1 LANGUAGES CXX)
+project(SEALTinyAlabels VERSION 4.1.1 LANGUAGES CXX)
 
 # If not called from root CMakeLists.txt
-if(NOT DEFINED SEAL_BUILD_MYTESTS)
-    set(SEAL_BUILD_MYTESTS ON)
+if(NOT DEFINED SEAL_BUILD_TINYLABELS)
+    set(SEAL_BUILD_TINYLABELS ON)
 
     # Import Microsoft SEAL
     find_package(SEAL 4.1.1 EXACT REQUIRED)
@@ -15,7 +12,7 @@ if(NOT DEFINED SEAL_BUILD_MYTESTS)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
 endif()
 
-if(SEAL_BUILD_MYTESTS)
+if(SEAL_BUILD_TINYLABELS)
     add_executable(setup)
     target_sources(setup
         PRIVATE

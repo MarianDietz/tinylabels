@@ -26,6 +26,8 @@ cmake --build build
 This will generate all executables (`setup`, `enc1`, `enc2`, `keygen`, `dec`, `gen_samples`, `benchmark`) of our implementation in the `build/bin` directory.
 To test our implementation, run `cd build/bin`, and then follow the next steps.
 
+If your processor supports [Intel HEXL](https://github.com/intel/hexl), you may enable the acceleration library `-DSEAL_USE_INTEL_HEXL=ON` when running the first `cmake` commands. Doing so may yield some performance improvements.
+
 ## How to Use
 
 After building the code, all algorithms of the batch-select primitive can be executed individually.
