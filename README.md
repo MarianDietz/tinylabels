@@ -22,15 +22,17 @@ In particular, it is sufficient to run the following two commands to build the i
 cmake -S . -B build -DSEAL_BUILD_TINYLABELS=ON
 cmake --build build
 ```
+(If errors are generated, it may help to add `-DSEAL_USE_ZLIB=OFF` to the first command. Zlib is not required by TinyLabels.)
 
 This will generate all executables (`setup`, `enc1`, `enc2`, `keygen`, `dec`, `gen_samples`, `benchmark`) of our implementation in the `build/bin` directory.
 To test our implementation, run `cd build/bin`, and then follow the next steps.
 
-If your processor supports [Intel HEXL](https://github.com/intel/hexl), you may enable the acceleration library using `-DSEAL_USE_INTEL_HEXL=ON` when running the first `cmake` commands. Doing so may yield some performance improvements.
+By adding `-DSEAL_USE_INTEL_HEXL=ON` to the first `cmake` command, you can enable the [Intel HEXL](https://github.com/intel/hexl) acceleration library for NTT operations. This may yield some performance improvements. However, please note that the HEXL library's main performance boost only applies to CPUs that support the AVX-512 instruction set (in particular, according the [Intel HEXL benchmarking paper](https://arxiv.org/pdf/2103.16400), the fastest option would be AVX512-IFMA52).
+In order to determine whether your setup supports AVX-512, please check the precise model of your CPU.
 
 ## How to Use
 
-After building the code, all algorithms of the batch-select primitive can be executed individually.
+After building the code, all algorithms of the batch-select primitive can be executed individually. They can be found in the `build/bin` directory.
 
 We recommend to first run `./gen_samples`: This will generate uniformly random vectors `l_1` and `l_2`, as well as a uniformly random binary vector `y`.
 They are placed in files `l_1.txt`, `l_2.txt`, and `y.txt`.
@@ -57,6 +59,6 @@ The main purpose of this implementation is the evaluation of running time.
 
 ## Modifying Parameters
 
-The constants at the beginning of `native/mytests/batchselect.h` may be modified to test the implementation on other parameters.
+The constants at the beginning of `native/tinylabels/batchselect.h` may be modified to test the implementation on other parameters.
 For example, by changing `w` to another value, the input vector length will be changed to `w*poly_modulus_degree`.
 After re-building the source code and re-running `./gen_samples`, you can observe how the running time changes for the desired vector length.
